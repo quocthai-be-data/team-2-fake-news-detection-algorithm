@@ -1,111 +1,54 @@
 {
-  // ───────────────────────────────────────────────
-  //  .vscode\tasks.json
-  //  Copy vào MỌI project: <project>\.vscode\tasks.json
-  //  Hoặc dùng: File > Preferences > Configure Tasks
-  //  Dùng: Ctrl+Shift+B để build
-  // ───────────────────────────────────────────────
   "version": "2.0.0",
   "tasks": [
-
-    // ── Task 1: Build file đang mở (C++) ──────────
     {
       "label": "Build Active File (C++)",
       "type": "shell",
       "command": "g++",
-      "args": [
-        "-g",
-        "-Wall",
-        "-std=c++17",
-        "${file}",
-        "-o",
-        "${fileDirname}/${fileBasenameNoExtension}"
-      ],
-      "options": {
-        "cwd": "${fileDirname}"
-      },
+      "args": ["-g", "-Wall", "-std=c++17", "${file}", "-o", "${fileDirname}/${fileBasenameNoExtension}"],
+      "options": { "cwd": "${fileDirname}" },
       "problemMatcher": ["$gcc"],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "detail": "Compile file C++ đang mở, output cùng thư mục"
+      "group": { "kind": "build", "isDefault": true }
     },
-
-    // ── Task 2: Build file đang mở (C) ────────────
     {
       "label": "Build Active File (C)",
       "type": "shell",
       "command": "gcc",
-      "args": [
-        "-g",
-        "-Wall",
-        "-std=c17",
-        "${file}",
-        "-o",
-        "${fileDirname}/${fileBasenameNoExtension}"
-      ],
-      "options": {
-        "cwd": "${fileDirname}"
-      },
+      "args": ["-g", "-Wall", "-std=c17", "${file}", "-o", "${fileDirname}/${fileBasenameNoExtension}"],
+      "options": { "cwd": "${fileDirname}" },
       "problemMatcher": ["$gcc"],
-      "group": "build",
-      "detail": "Compile file C đang mở, output cùng thư mục"
+      "group": "build"
     },
-
-    // ── Task 3: Build TOÀN BỘ *.cpp trong thư mục ─
     {
       "label": "Build All CPP in Folder",
       "type": "shell",
       "command": "g++",
-      "args": [
-        "-g",
-        "-Wall",
-        "-std=c++17",
-        "*.cpp",
-        "-o",
-        "${workspaceFolderBasename}"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "args": ["-g", "-Wall", "-std=c++17", "*.cpp", "-o", "${workspaceFolderBasename}"],
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": ["$gcc"],
-      "group": "build",
-      "detail": "Compile tất cả *.cpp trong workspace thành 1 file exe"
+      "group": "build"
     },
-
-    // ── Task 4: Build & Run — mở cửa sổ cmd riêng ─
     {
       "label": "Build & Run Active File (C++)",
       "type": "shell",
       "command": "g++ -g -Wall -std=c++17 \"${file}\" -o \"${fileDirname}\\${fileBasenameNoExtension}.exe\" && start \"${fileBasenameNoExtension}\" cmd /c \"\\\"${fileDirname}\\${fileBasenameNoExtension}.exe\\\" & pause\"",
       "options": {
         "cwd": "${fileDirname}",
-        "shell": {
-          "executable": "cmd.exe",
-          "args": ["/d", "/c"]
-        }
+        "shell": { "executable": "cmd.exe", "args": ["/d", "/c"] }
       },
       "problemMatcher": ["$gcc"],
-      "group": "build",
-      "detail": "Compile xong mở cửa sổ cmd riêng bên ngoài"
+      "group": "build"
     },
-
-    // ── Task 5: Clean — xóa file exe vừa build ────
     {
       "label": "Clean Build Output",
       "type": "shell",
       "command": "del /Q \"${fileDirname}\\${fileBasenameNoExtension}.exe\" 2>nul || echo No exe found",
       "options": {
         "cwd": "${fileDirname}",
-        "shell": {
-          "executable": "cmd.exe",
-          "args": ["/d", "/c"]
-        }
+        "shell": { "executable": "cmd.exe", "args": ["/d", "/c"] }
       },
       "problemMatcher": [],
-      "group": "none",
-      "detail": "Xóa file .exe của file đang mở"
+      "group": "none"
     }
   ]
 }

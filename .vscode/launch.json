@@ -1,22 +1,12 @@
 {
-  // ───────────────────────────────────────────────
-  //  .vscode\launch.json
-  //  Copy vào MỌI project: <project>\.vscode\launch.json
-  //  F5 = debug | Ctrl+F5 = chạy không debug
-  // ───────────────────────────────────────────────
   "version": "0.2.0",
   "configurations": [
-
-    // ── Config 1: Debug file C++ đang mở ──────────
     {
       "name": "Debug Active File (C++)",
       "type": "cppdbg",
       "request": "launch",
-      "program": "C:/Windows/System32/cmd.exe",
-      "args": [
-        "/k",
-        "${fileDirname}/${fileBasenameNoExtension} & pause"
-      ],
+      "program": "${fileDirname}/${fileBasenameNoExtension}.exe",
+      "args": [],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
       "environment": [],
@@ -24,25 +14,16 @@
       "MIMode": "gdb",
       "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe",
       "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
+        { "description": "Enable pretty-printing", "text": "-enable-pretty-printing", "ignoreFailures": true }
       ],
       "preLaunchTask": "Build Active File (C++)"
     },
-
-    // ── Config 2: Debug file C đang mở ────────────
     {
       "name": "Debug Active File (C)",
       "type": "cppdbg",
       "request": "launch",
-      "program": "C:/Windows/System32/cmd.exe",
-      "args": [
-        "/k",
-        "${fileDirname}/${fileBasenameNoExtension} & pause"
-      ],
+      "program": "${fileDirname}/${fileBasenameNoExtension}.exe",
+      "args": [],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
       "environment": [],
@@ -50,25 +31,17 @@
       "MIMode": "gdb",
       "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe",
       "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
+        { "description": "Enable pretty-printing", "text": "-enable-pretty-printing", "ignoreFailures": true }
       ],
       "preLaunchTask": "Build Active File (C)"
     },
-
-    // ── Config 3: Chạy không debug (nhanh) ────────
     {
+      // Run without debug — cmd trick keeps window open after exit
       "name": "Run Without Debug (C++)",
       "type": "cppdbg",
       "request": "launch",
       "program": "C:/Windows/System32/cmd.exe",
-      "args": [
-        "/k",
-        "${fileDirname}/${fileBasenameNoExtension} & pause"
-      ],
+      "args": ["/k", "${fileDirname}/${fileBasenameNoExtension} & pause"],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
       "environment": [],
