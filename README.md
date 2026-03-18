@@ -291,7 +291,7 @@ if score < 0.7:   → FAKE
 
 **Branches:**
 - `main`: Production-ready code
-- `small_data_testing`: Testing branch with smaller dataset
+- `SmallTest`: Testing branch with smaller dataset
 - Development branches: Feature-specific implementations
 
 ---
