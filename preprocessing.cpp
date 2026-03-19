@@ -17,7 +17,7 @@ private:
         for (size_t i = 0; i < line.length(); ++i) {
             char c = line[i];
             if (c == '"') {
-                // Xử lý dấu ngoặc kép kép "" (escape)
+                // Xử lý dấu ngoặc kép "" (escape)
                 if (insideQuotes && i + 1 < line.length() && line[i + 1] == '"') {
                     cell += '"';
                     i++;
@@ -63,7 +63,7 @@ private:
 public:
     Preprocessor() { loadStopwords(); }
 
-    void processCSV(std::string inputPath, std::string outputPath) {
+    void processCSV(std::string inputPath, std::string outputPath) { 
         std::ifstream fin(inputPath);
         std::ofstream fout(outputPath);
 
