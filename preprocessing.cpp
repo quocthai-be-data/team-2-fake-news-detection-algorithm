@@ -1,10 +1,17 @@
 #include "preprocessing.h"
-class Preprocessor {
-private:
-    std::unordered_set<std::string> stopwords;
+#include "Preprocessor.h"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+#include <cctype>
 
-    void loadStopwords() {
-        std::vector<std::string> words = {"a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "as", "at", 
+Preprocessor::Preprocessor() {
+    loadStopwords();
+}
+
+void Preprocessor::loadStopwords() {
+    stopwords = {"a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "as", "at", 
             "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can", "could", 
             "did", "do", "does", "doing", "down", "during", "each", "few", "for", "from", "further", "had", "has", 
             "have", "having", "he", "her", "here", "hers", "herself", "him", "himself", "his", "how", "i", "if", 
@@ -13,13 +20,11 @@ private:
             "out", "over", "own", "same", "she", "should", "so", "some", "such", "than", "that", "the", "their", 
             "theirs", "them", "themselves", "then", "there", "these", "they", "this", "those", "through", "to", 
             "too", "under", "until", "up", "very", "was", "we", "were", "what", "when", "where", "which", "while", 
-            "who", "whom", "why", "with", "would", "you", "your", "yours", "yourself", "yourselves"}; 
-        for (const std::string& w : words) stopwords.insert(w);
-    }
+            "who", "whom", "why", "with", "would", "you", "your", "yours", "yourself", "yourselves"}; // Rút gọn cho ví dụ
+}
 
-    // --- MÃ NGUỒN 1: HÀM PARSE DÒNG CSV (Xử lý dấu phẩy trong ngoặc kép) ---
-    std::vector<std::string> parseCSVLine(const std::string& line) {
-        std::vector<std::string> row;
+std::vector<std::string> Preprocessor::parseCSVLine(const std::string& line) {
+    std::vector<std::string> row;
         std::string cell;
         bool insideQuotes = false;
 
@@ -42,11 +47,10 @@ private:
         }
         row.push_back(cell);
         return row;
-    }
+}
 
-    // Hàm làm sạch nội dung text/title
-    std::string cleanContent(std::string raw) {
-        std::string cleaned = "";
+std::string Preprocessor::cleanContent(std::string raw) {
+   std::string cleaned = "";
         for (char c : raw) {
             if (std::isalnum(c)) cleaned += (char)std::tolower(c);
             else cleaned += ' ';
@@ -57,23 +61,18 @@ private:
             if (stopwords.find(word) == stopwords.end()) result += word + " ";
         }
         if (!result.empty()) result.pop_back();
-        return result;
-    }
+        return result;}
 
-    std::string ensureNumeric(std::string val) {
-        if (val.empty() || val == " " || val == "\r" || val == "\n") return "0";
-        // Loại bỏ các ký tự không phải số nếu có
+std::string Preprocessor::ensureNumeric(std::string val) {
+   if (val.empty() || val == " " || val == "\r" || val == "\n") return "0";
         val.erase(std::remove_if(val.begin(), val.end(), [](char c) { 
             return !std::isdigit(c) && c != '.'; 
         }), val.end());
         return val.empty() ? "0" : val;
-    }
+}
 
-public:
-    Preprocessor() { loadStopwords(); }
-
-    void processCSV(std::string inputPath, std::string outputPath) {
-        std::ifstream fin(inputPath);
+void Preprocessor::processCSV(std::string inputPath, std::string outputPath) {
+     std::ifstream fin(inputPath);
         std::ofstream fout(outputPath);
 
         if (!fin.is_open()) {
@@ -132,11 +131,4 @@ public:
         fin.close();
         fout.close();
         std::cout << "SUCCESS: File da duoc lam sach tai " << outputPath << std::endl;
-    }
-};
-
-int main() {
-    Preprocessor p;
-    p.processCSV("dataTesting.csv", "dataCleaned.csv");
-    return 0;
 }
