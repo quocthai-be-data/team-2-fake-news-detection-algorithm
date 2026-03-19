@@ -1,5 +1,5 @@
-#ifndef PREPROCESSOR_H
-#define PREPROCESSOR_H
+#ifndef PREPROCESSING_H
+#define PREPROCESSING_H
 
 #include <vector>
 #include <string>
