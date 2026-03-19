@@ -5,6 +5,7 @@
 using namespace std;
 
 int main(){
-
+    Preprocessor p;
+    p.processCSV("data/dataTesting.csv", "dataCleaned.csv");
     return 0;
 }

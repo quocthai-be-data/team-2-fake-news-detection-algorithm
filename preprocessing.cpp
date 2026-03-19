@@ -1,10 +1,4 @@
 #include "preprocessing.h"
-#include "Preprocessor.h"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <algorithm>
-#include <cctype>
 
 Preprocessor::Preprocessor() {
     loadStopwords();
@@ -20,7 +14,7 @@ void Preprocessor::loadStopwords() {
             "out", "over", "own", "same", "she", "should", "so", "some", "such", "than", "that", "the", "their", 
             "theirs", "them", "themselves", "then", "there", "these", "they", "this", "those", "through", "to", 
             "too", "under", "until", "up", "very", "was", "we", "were", "what", "when", "where", "which", "while", 
-            "who", "whom", "why", "with", "would", "you", "your", "yours", "yourself", "yourselves"}; // Rút gọn cho ví dụ
+            "who", "whom", "why", "with", "would", "you", "your", "yours", "yourself", "yourselves"};
 }
 
 std::vector<std::string> Preprocessor::parseCSVLine(const std::string& line) {
@@ -31,7 +25,7 @@ std::vector<std::string> Preprocessor::parseCSVLine(const std::string& line) {
         for (size_t i = 0; i < line.length(); ++i) {
             char c = line[i];
             if (c == '"') {
-                // Xử lý dấu ngoặc kép "" (escape)
+                // Handle escaped double quotes ""
                 if (insideQuotes && i + 1 < line.length() && line[i + 1] == '"') {
                     cell += '"';
                     i++;
@@ -61,7 +55,8 @@ std::string Preprocessor::cleanContent(std::string raw) {
             if (stopwords.find(word) == stopwords.end()) result += word + " ";
         }
         if (!result.empty()) result.pop_back();
-        return result;}
+        return result;
+}
 
 std::string Preprocessor::ensureNumeric(std::string val) {
    if (val.empty() || val == " " || val == "\r" || val == "\n") return "0";
@@ -76,7 +71,7 @@ void Preprocessor::processCSV(std::string inputPath, std::string outputPath) {
         std::ofstream fout(outputPath);
 
         if (!fin.is_open()) {
-            std::cerr << "Loi: Khong tim thay file " << inputPath << std::endl;
+            std::cerr << "Error: Cannot open file " << inputPath << std::endl;
             return;
         }
 
@@ -84,36 +79,36 @@ void Preprocessor::processCSV(std::string inputPath, std::string outputPath) {
         std::string fullRecord = "";
         bool recordInsideQuotes = false;
 
-        // Ghi Header cho file output
-        fout << "uuid,type,site_url,domain_rank,title_clean,text_clean,spam_score,replies_count,participants_count,likes,comments,shares\n";
+        // Write header for output file
+        fout << "uuid,type,site_url,domain_rank,title,text,spam_score,replies_count,participants_count,likes,comments,shares\n";
 
-        // Bỏ qua dòng tiêu đề của file input
+        // Skip header line of input file
         std::getline(fin, line);
 
-        // --- MÃ NGUỒN 2: LOGIC GHÉP DÒNG (Xử lý xuống dòng trong ngoặc kép) ---
+        // Handle records that span multiple lines due to newlines inside quoted fields
         while (std::getline(fin, line)) {
             if (line.empty() && !recordInsideQuotes) continue;
 
             fullRecord += line;
 
-            // Kiểm tra xem dòng hiện tại có chứa dấu ngoặc kép chưa đóng không
+            // Check if the current line has an unclosed quote
             for (char c : line) {
                 if (c == '"') recordInsideQuotes = !recordInsideQuotes;
             }
 
-            // Nếu dấu ngoặc chưa đóng, tiếp tục đọc dòng tiếp theo và nối vào
+            // If quote is still open, keep reading next lines and append
             if (recordInsideQuotes) {
-                fullRecord += " "; // Thêm khoảng trắng thay cho dấu xuống dòng
+                fullRecord += " "; // Replace newline with a space
                 continue;
             }
 
-            // Đã có một Record hoàn chỉnh, tiến hành parse
+            // Full record is complete, proceed to parse
             std::vector<std::string> row = parseCSVLine(fullRecord);
-            fullRecord.clear(); // Reset cho record tiếp theo
+            fullRecord.clear(); // Reset for next record
 
-            if (row.size() < 20) continue; // Chỉ xử lý nếu đủ cấu trúc cột
+            if (row.size() < 20) continue; // Skip rows with incomplete structure
 
-            // Trích xuất và clean (Chỉ số cột dựa trên dataset của bạn)
+            // Extract and clean columns (column indices based on dataset structure)
             fout << row[0] << ","                         // uuid
                  << row[19] << ","                        // type
                  << row[8] << ","                         // site_url
@@ -121,8 +116,8 @@ void Preprocessor::processCSV(std::string inputPath, std::string outputPath) {
                  << "\"" << cleanContent(row[4]) << "\"," // title
                  << "\"" << cleanContent(row[5]) << "\"," // text
                  << ensureNumeric(row[12]) << ","         // spam_score
-                 << ensureNumeric(row[14]) << ","         // replies
-                 << ensureNumeric(row[15]) << ","         // participants
+                 << ensureNumeric(row[14]) << ","         // replies_count
+                 << ensureNumeric(row[15]) << ","         // participants_count
                  << ensureNumeric(row[16]) << ","         // likes
                  << ensureNumeric(row[17]) << ","         // comments
                  << ensureNumeric(row[18]) << "\n";       // shares
@@ -130,5 +125,5 @@ void Preprocessor::processCSV(std::string inputPath, std::string outputPath) {
 
         fin.close();
         fout.close();
-        std::cout << "SUCCESS: File da duoc lam sach tai " << outputPath << std::endl;
+        std::cout << "SUCCESS: Cleaned file saved at " << outputPath << std::endl;
 }

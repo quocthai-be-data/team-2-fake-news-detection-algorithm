@@ -2,6 +2,23 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Run Project",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": true,
+      "MIMode": "gdb",
+      "miDebuggerPath": "C:/msys64/ucrt64/bin/gdb.exe",
+      "setupCommands": [
+        { "description": "Enable pretty-printing", "text": "-enable-pretty-printing", "ignoreFailures": true }
+      ],
+      "preLaunchTask": "Build Project"
+    },
+    {
       "name": "Debug Active File (C++)",
       "type": "cppdbg",
       "request": "launch",
@@ -36,12 +53,11 @@
       "preLaunchTask": "Build Active File (C)"
     },
     {
-      // Run without debug — cmd trick keeps window open after exit
       "name": "Run Without Debug (C++)",
       "type": "cppdbg",
       "request": "launch",
       "program": "C:/Windows/System32/cmd.exe",
-      "args": ["/k", "${fileDirname}/${fileBasenameNoExtension} & pause"],
+      "args": ["/k", "${fileDirname}/${fileBasenameNoExtension}.exe & pause"],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
       "environment": [],

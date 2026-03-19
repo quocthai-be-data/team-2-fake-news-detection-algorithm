@@ -1,9 +1,14 @@
-#ifndef PREPROCESSOR_H
-#define PREPROCESSOR_H
+#ifndef PREPROCESSING_H
+#define PREPROCESSING_H
 
 #include <vector>
 #include <string>
 #include <unordered_set>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+#include <cctype>
 
 class Preprocessor {
 private:
