@@ -1,13 +1,23 @@
-#ifndef PREPROCESSING_H
-#define PREPROCESSING_H
-#include <iostream>
-#include <fstream>
+#ifndef PREPROCESSOR_H
+#define PREPROCESSOR_H
+
 #include <vector>
 #include <string>
-#include <sstream>
 #include <unordered_set>
-#include <algorithm>
-#include <cctype>
 
+class Preprocessor {
+private:
+    std::unordered_set<std::string> stopwords;
+    
+    // Các hàm bổ trợ (Helper functions) để chế độ private
+    void loadStopwords();
+    std::vector<std::string> parseCSVLine(const std::string& line);
+    std::string cleanContent(std::string raw);
+    std::string ensureNumeric(std::string val);
+
+public:
+    Preprocessor(); // Constructor
+    void processCSV(std::string inputPath, std::string outputPath);
+};
 
 #endif
