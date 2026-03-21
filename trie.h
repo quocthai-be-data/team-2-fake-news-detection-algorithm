@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 
 struct TrieNode {
     TrieNode* children[26];
@@ -19,10 +20,12 @@ public:
     Trie();
     void insert(std::string word);
     bool search(std::string word);
-    int countKeywords(std::vector<std::string> words);
+    void loadSuspiciousKeywords(std::string filename);
+    void processFileAndDisplay(std::string filePath);
 
 private:
     TrieNode* root;
+    int countKeywords(std::vector<std::string> words);
 };
 
 #endif
