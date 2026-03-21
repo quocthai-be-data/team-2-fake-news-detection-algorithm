@@ -8,7 +8,10 @@ struct TrieNode {
     TrieNode* children[26];
     bool isEndOfWord;
 
-    TrieNode();
+    TrieNode() {
+        isEndOfWord = false;
+        for (int i = 0; i < 26; i++) children[i] = nullptr;
+    }
 };
 
 class Trie {
