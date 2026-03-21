@@ -1,4 +1,4 @@
 #ifndef TRIE_H
-#defin TRIE_H
+#define TRIE_H
 
 #endif

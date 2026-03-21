@@ -14,11 +14,12 @@ class Preprocessor {
 private:
     std::unordered_set<std::string> stopwords;
     
-    // Các hàm bổ trợ (Helper functions) để chế độ private
+    // Helper functions
     void loadStopwords();
     std::vector<std::string> parseCSVLine(const std::string& line);
     std::string cleanContent(std::string raw);
     std::string ensureNumeric(std::string val);
+    std::string escapeCSV(const std::string& field);
 
 public:
     Preprocessor(); // Constructor
