@@ -10,13 +10,22 @@
 Trie::Trie() {
     root = new TrieNode();
 }
+Trie::~Trie() {
+    delete root; 
+}
 
-void Trie::insert(std::string word) {
+int getIndex(char c) {
+    if (c == ' ') return 26; // Dấu cách dùng index 26
+    char low = std::tolower(static_cast<unsigned char>(c));
+    if (low >= 'a' && low <= 'z') return low - 'a';
+    return -1; // Ký tự không hợp lệ
+}
+
+void Trie::insert(const std::string& word) {
     TrieNode* curr = root;
     for (char c : word) {
-        // Chuyển về chữ thường để đồng bộ (giả sử dữ liệu đã clean)
-        int index = std::tolower(c) - 'a';
-        if (index < 0 || index >= 26) continue; // Bỏ qua ký tự không hợp lệ
+        int index = getIndex(c);
+        if (index == -1) continue; // Bỏ qua ký tự đặc biệt như @, #, $
 
         if (curr->children[index] == nullptr) {
             curr->children[index] = new TrieNode();
@@ -26,11 +35,11 @@ void Trie::insert(std::string word) {
     curr->isEndOfWord = true;
 }
 
-bool Trie::search(std::string word) {
+bool Trie::search(const std::string& word) {
     TrieNode* curr = root;
     for (char c : word) {
-        int index = std::tolower(c) - 'a';
-        if (index < 0 || index >= 26) return false;
+        int index = getIndex(c);
+        if (index == -1) continue; 
 
         if (curr->children[index] == nullptr) {
             return false;
@@ -40,7 +49,7 @@ bool Trie::search(std::string word) {
     return curr != nullptr && curr->isEndOfWord;
 }
 
-int Trie::countKeywords(std::vector<std::string> words) {
+int Trie::countKeywords(std::vector<std::string>& words) {
     int count = 0;
     for (const std::string& word : words) {
         if (search(word)) {
@@ -50,39 +59,21 @@ int Trie::countKeywords(std::vector<std::string> words) {
     return count;
 }
 
-void Trie::loadSuspiciousKeywords(std::string filename) {
+void Trie::loadSuspiciousKeywords(const std::string& filename) {
     std::ifstream file(filename);
-    
-    if (!file.is_open()) {
-        std::cerr << "[ERROR] Don't find the keywords: " << filename << std::endl;
-        return;
-    }
-
     std::string line;
-    int count = 0;
-    while (std::getline(file, line)) {
-        if (line.empty() || line.find("//") != std::string::npos) continue;
-        for (char &c : line) {
-            if (c == '{' || c == '}' || c == '"' || c == ',') {
-                c = ' ';
-            }
-        }
 
-        std::stringstream ss(line);
-        std::string word;
-        while (ss >> word) {
-            if (!word.empty()) {
-                insert(word);
-                count++;
-            }
+    while (std::getline(file, line)) {
+        if (!line.empty()) {
+            // Xóa ký tự \r nếu file được tạo từ Windows
+            if (line.back() == '\r') line.pop_back();
+            insert(line); 
         }
     }
-    
-    std::cout << "[Trie] Done " << count << " from: " << filename << std::endl;
     file.close();
 }
 
-void Trie::processFileAndDisplay(std::string filePath) {
+void Trie::processFileAndDisplay(const std::string& filePath) {
     std::cout << "\n--- Start checking file: " << filePath << " ---" << std::endl;
     
     std::ifstream file(filePath);
@@ -109,13 +100,37 @@ void Trie::processFileAndDisplay(std::string filePath) {
         std::string uuid, cleaned_text;
 
         if (std::getline(ss, uuid, ',') && std::getline(ss, cleaned_text)) {
+            // Tách tất cả các từ trong dòng vào một vector để dễ duyệt theo chỉ số
+            std::vector<std::string> words;
             std::stringstream textStream(cleaned_text);
-            std::string word;
+            std::string w;
+            while (textStream >> w) words.push_back(w);
+
             int count = 0;
-            while (textStream >> word) {
-                if (search(word)) count++;
+            // Duyệt qua từng từ trong câu
+            for (size_t i = 0; i < words.size(); ++i) {
+                int bestMatchLength = -1;
+                std::string currentPhrase = "";
+                
+                // Từ vị trí i, thử ghép thêm các từ tiếp theo (i+1, i+2...) 
+                // để xem có tạo thành cụm từ nào có trong Trie không
+                // Giới hạn j để tránh cụm từ quá dài (ví dụ tối đa 10 từ)
+                for (size_t j = i; j < words.size() && j < i + 10; ++j) {
+                    if (currentPhrase.empty()) currentPhrase = words[j];
+                    else currentPhrase += " " + words[j];
+
+                    if (search(currentPhrase)) {
+                        // Em đang muốn một từ chỉ thuộc về một cụm từ duy nhất (không trùng lặp)
+                        bestMatchLength = j;
+                    }
+                }
+
+                if (bestMatchLength != -1) {
+                    count++;
+                    i = bestMatchLength; // NHẢY CÁCH: Bỏ qua các từ con đã nằm trong cụm vừa khớp
+                }
             }
-            std::cout << std::left << std::setw(20) << uuid << " | " << count << std::endl;
+            std::cout << std::left << std::setw(42) << uuid << " | " << count << std::endl;
         } else {
             std::cout << "[FORMAT EROOR] Line " << rowCount << " Incorrect format 'uuid,text': " << line << std::endl;
         }

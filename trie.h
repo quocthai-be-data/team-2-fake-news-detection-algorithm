@@ -6,26 +6,35 @@
 #include <fstream>
 
 struct TrieNode {
-    TrieNode* children[26];
+    TrieNode* children[27];
     bool isEndOfWord;
 
     TrieNode() {
         isEndOfWord = false;
-        for (int i = 0; i < 26; i++) children[i] = nullptr;
+        for (int i = 0; i < 27; i++) children[i] = nullptr;
+    }
+
+    ~TrieNode() {
+        for (int i = 0; i < 27; i++) {
+            if (children[i] != nullptr) {
+                delete children[i];
+            }
+        }
     }
 };
 
 class Trie {
 public:
     Trie();
-    void insert(std::string word);
-    bool search(std::string word);
-    void loadSuspiciousKeywords(std::string filename);
-    void processFileAndDisplay(std::string filePath);
+    ~Trie();
+    void insert(const std::string& word);
+    bool search(const std::string& word);
+    void loadSuspiciousKeywords(const std::string& filename);
+    void processFileAndDisplay(const std::string& filePath);
 
 private:
     TrieNode* root;
-    int countKeywords(std::vector<std::string> words);
+    int countKeywords(std::vector<std::string>& words);
 };
 
 #endif

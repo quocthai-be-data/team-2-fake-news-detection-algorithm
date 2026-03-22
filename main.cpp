@@ -6,11 +6,11 @@ using namespace std;
 
 int main(){
     Preprocessor p;
-    p.processCSV("data/dataTesting.csv", "dataCleaned.csv");
+    p.processCSV("data/dataTesting.csv", "data/dataCleaned.csv");
     
     Trie detector;
-    detector.loadSuspiciousKeywords("SuspiciousKeywords.csv");
-    detector.processFileAndDisplay("dataCleaned.csv");
+    detector.loadSuspiciousKeywords("data/SuspiciousKeywords.csv");
+    detector.processFileAndDisplay("data/dataCleaned.csv");
     
     return 0;
 }
