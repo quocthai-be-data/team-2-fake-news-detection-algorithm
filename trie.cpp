@@ -49,18 +49,19 @@ bool Trie::search(const std::string& word) {
     return curr != nullptr && curr->isEndOfWord;
 }
 
-int Trie::countKeywords(std::vector<std::string>& words) {
-    int count = 0;
-    for (const std::string& word : words) {
-        if (search(word)) {
-            count++;
-        }
-    }
-    return count;
-}
+// int Trie::countKeywords(std::vector<std::string>& words) {
+//     int count = 0;
+//     for (const std::string& word : words) {
+//         if (search(word)) {
+//             count++;
+//         }
+//     }
+//     return count; // Function none using
+// }
 
 void Trie::loadSuspiciousKeywords(const std::string& filename) {
     std::ifstream file(filename);
+    if(!file.is_open()) return;
     std::string line;
 
     while (std::getline(file, line)) {
@@ -96,44 +97,42 @@ void Trie::processFileAndDisplay(const std::string& filePath) {
     int rowCount = 0;
     while (std::getline(file, line)) {
         rowCount++;
+        std::vector<std::string> cols;
         std::stringstream ss(line);
-        std::string uuid, cleaned_text;
-
-        if (std::getline(ss, uuid, ',') && std::getline(ss, cleaned_text)) {
-            // Tách tất cả các từ trong dòng vào một vector để dễ duyệt theo chỉ số
-            std::vector<std::string> words;
-            std::stringstream textStream(cleaned_text);
-            std::string w;
-            while (textStream >> w) words.push_back(w);
-
-            int count = 0;
-            // Duyệt qua từng từ trong câu
-            for (size_t i = 0; i < words.size(); ++i) {
-                int bestMatchLength = -1;
-                std::string currentPhrase = "";
-                
-                // Từ vị trí i, thử ghép thêm các từ tiếp theo (i+1, i+2...) 
-                // để xem có tạo thành cụm từ nào có trong Trie không
-                // Giới hạn j để tránh cụm từ quá dài (ví dụ tối đa 10 từ)
-                for (size_t j = i; j < words.size() && j < i + 10; ++j) {
-                    if (currentPhrase.empty()) currentPhrase = words[j];
-                    else currentPhrase += " " + words[j];
-
-                    if (search(currentPhrase)) {
-                        // Em đang muốn một từ chỉ thuộc về một cụm từ duy nhất (không trùng lặp)
-                        bestMatchLength = j;
-                    }
-                }
-
-                if (bestMatchLength != -1) {
-                    count++;
-                    i = bestMatchLength; // NHẢY CÁCH: Bỏ qua các từ con đã nằm trong cụm vừa khớp
+        std::string col;
+        while (std::getline(ss, col, ',')) {
+            cols.push_back(col);
+        }
+        if (cols.size() < 6) {
+            std::cout << "[FORMAT ERROR] Line " << rowCount
+                      << ": expected >= 6 columns, got " << cols.size() << std::endl;
+            continue;
+        }
+        std::string uuid = cols[0];
+        std::string content = cols[4] + " " + cols[5]; // Chỉ lấy title + text
+        // split content to words
+        std::vector<std::string> words;
+        std::stringstream textStream(content);
+        std::string w;
+        while (textStream >> w) words.push_back(w);
+        int count = 0;
+        for (size_t i = 0; i < words.size(); ++i) {
+            int bestMatchLength = -1;
+            std::string currentPhrase = "";
+            
+            for (size_t j = i; j < words.size() && j < i + 10; ++j) {
+                if (currentPhrase.empty()) currentPhrase = words[j];
+                else currentPhrase += " " + words[j];
+                if (search(currentPhrase)) {
+                    bestMatchLength = j;
                 }
             }
-            std::cout << std::left << std::setw(42) << uuid << " | " << count << std::endl;
-        } else {
-            std::cout << "[FORMAT EROOR] Line " << rowCount << " Incorrect format 'uuid,text': " << line << std::endl;
+            if (bestMatchLength != -1) {
+                count++;
+                i = bestMatchLength;
+            }
         }
+        std::cout << std::left << std::setw(42) << uuid << " | " << count << std::endl;
     }
 
     if (rowCount == 0) {
