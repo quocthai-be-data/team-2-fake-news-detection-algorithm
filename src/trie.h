@@ -35,7 +35,7 @@ public:
     void insert(const std::string& word);
     bool search(const std::string& word);
     void loadSuspiciousKeywords(const std::string& filename);
-    void processFileAndDisplay(const std::string& filePath);
+    std::map<std::string, int> processFileAndDisplay(const std::string& filePath);
 
 private:
     TrieNode* root;

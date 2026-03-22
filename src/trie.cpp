@@ -67,7 +67,7 @@ void Trie::loadSuspiciousKeywords(const std::string& filename) {
     file.close();
 }
 
-void Trie::processFileAndDisplay(const std::string& filePath) {
+std::map<std::string, int> Trie::processFileAndDisplay(const std::string& filePath) {
     std::cout << " --- Start checking file: " << filePath << " ---" << std::endl;
     std::cout << "| \n";
     std::cout << " --- The scoring for each article based on the number of suspicious words that match the list ---" << std::endl;
@@ -76,14 +76,14 @@ void Trie::processFileAndDisplay(const std::string& filePath) {
     std::ifstream file(filePath);
     if (!file.is_open()) {
         std::cerr << "[Error] Don't open the file." << std::endl;
-        return;
+        return {};
     }
 
     std::string line;
 
     if (!std::getline(file, line)) {
         std::cout << "[WARNING] The file is empty!" << std::endl;
-        return;
+        return {};
     }
     std::cout << "Read Header: " << line << std::endl;
 
@@ -91,6 +91,7 @@ void Trie::processFileAndDisplay(const std::string& filePath) {
     std::cout << "------------------------------------------------------------" << std::endl;
 
     int rowCount = 0;
+    std::map<std::string, int> result;
     while (std::getline(file, line)) {
         rowCount++;
         std::vector<std::string> cols;
@@ -128,6 +129,7 @@ void Trie::processFileAndDisplay(const std::string& filePath) {
                 i = bestMatchLength;
             }
         }
+        result[uuid] = count;
         std::cout << std::left << std::setw(42) << uuid << " | " << count << std::endl;
     }
 
@@ -137,4 +139,5 @@ void Trie::processFileAndDisplay(const std::string& filePath) {
     
     file.close();
     std::cout << "--- End of processing ---" << std::endl;
+    return result;
 }
