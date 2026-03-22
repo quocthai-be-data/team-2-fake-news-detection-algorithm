@@ -1,11 +1,4 @@
 #include "trie.h"
-#include <algorithm>
-#include <iostream>
-#include <vector>
-#include <iomanip>
-#include <sstream>
-#include <map>
-#include <string>
 
 Trie::Trie() {
     root = new TrieNode();

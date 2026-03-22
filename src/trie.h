@@ -4,6 +4,11 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <map>
 
 struct TrieNode {
     TrieNode* children[27];

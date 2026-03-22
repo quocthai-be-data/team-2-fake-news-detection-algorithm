@@ -5,7 +5,7 @@
       "label": "Build Project",
       "type": "shell",
       "command": "g++",
-      "args": ["-g", "-Wall", "-std=c++17", "*.cpp", "-o", "main.exe"],
+      "args": ["-g", "-Wall", "-std=c++17", "src/*.cpp", "-o", "main.exe"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": ["$gcc"],
       "group": { "kind": "build", "isDefault": true }

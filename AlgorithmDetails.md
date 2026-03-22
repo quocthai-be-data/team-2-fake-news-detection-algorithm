@@ -23,17 +23,17 @@ This document is intended for team members to understand how each module works, 
 dataTesting.csv  (20 columns, raw data)
         |
 [ MODULE 1: PREPROCESSING ]
-  - Keep 10 relevant columns
+  - Keep 12 relevant columns
   - Clean and normalize data
         |
-preprocessed.csv  (10 columns, cleaned)
+dataCleaned.csv  (12 columns, cleaned)
         |
   +-----+-----+
   |           |
 [ MODULE 2 ] [ MODULE 3 ]       ← independent, run in parallel
 [   TRIE   ] [  HASHMAP  ]
   Read         Read all
-  title_text   10 columns
+  title_text   12 columns
   Count        Store metadata
   keywords     by uuid
   |           |
@@ -50,23 +50,23 @@ preprocessed.csv  (10 columns, cleaned)
   results.csv  +  evaluation_report.txt
 ```
 
-> **Module 2 (Trie) and Module 3 (HashMap) are independent.** They both read from `preprocessed.csv` but do not depend on each other. They can be developed and tested in parallel. Module 4 must wait for both to be ready.
+> **Module 2 (Trie) and Module 3 (HashMap) are independent.** They both read from `dataCleaned.csv` but do not depend on each other. They can be developed and tested in parallel. Module 4 must wait for both to be ready.
 
 ---
 
 ## Module 1 — Preprocessing
 
 ### Responsibility
-Read the raw input file `dataTesting.csv` (20 columns), discard irrelevant columns, clean the remaining data, and write a normalized `preprocessed.csv` (10 columns) for downstream modules.
+Read the raw input file `dataTesting.csv` (20 columns), discard irrelevant columns, clean the remaining data, and write a normalized `dataCleaned.csv` (12 columns) for downstream modules.
 
 ### Input / Output
 
 ```
 INPUT:  dataTesting.csv   — 20 columns, raw
-OUTPUT: preprocessed.csv  — 10 columns, cleaned
+OUTPUT: dataCleaned.csv  — 12 columns, cleaned
 ```
 
-### Step 1 — Keep only the 10 required columns
+### Step 1 — Keep only the 12 required columns
 
 From the original 20 columns, retain only:
 
@@ -136,7 +136,7 @@ Merge `title` and `text` into one column: `title_text_cleaned`. Then apply the f
 
 ---
 
-### Output Format (`preprocessed.csv`)
+### Output Format (`dataCleaned.csv`)
 
 ```
 uuid, type, site_url, domain_rank, title_text_cleaned, spam_score,
@@ -164,10 +164,10 @@ intl community financing protecting terrorists mother agnes vanessa beeley syria
 | | Details |
 |---|---|
 | **Read** | `dataTesting.csv` |
-| **Keep** | 10 columns relevant to scoring |
+| **Keep** | 12 columns relevant to scoring |
 | **Empty numeric cells** | Replace with `0` |
 | **title + text** | Merge → lowercase → remove special chars → tokenize → remove stopwords → store as `title_text_cleaned` |
-| **Write** | `preprocessed.csv` |
+| **Write** | `dataCleaned.csv` |
 | **Output consumed by** | Trie (reads `title_text_cleaned`), HashMap (reads all columns) |
 
 ---
@@ -175,12 +175,12 @@ intl community financing protecting terrorists mother agnes vanessa beeley syria
 ## Module 2 — Trie
 
 ### Responsibility
-Build a Trie loaded with suspicious keywords. For each article in `preprocessed.csv`, scan its cleaned text and count how many suspicious keywords it contains. Provide `uuid → keyword_count` to the Scoring module.
+Build a Trie loaded with suspicious keywords. For each article in `dataCleaned.csv`, scan its cleaned text and count how many suspicious keywords it contains. Provide `uuid → keyword_count` to the Scoring module.
 
 ### Input / Output
 
 ```
-INPUT:  preprocessed.csv — columns: uuid, title_text_cleaned
+INPUT:  dataCleaned.csv — columns: uuid, title_text_cleaned
 OUTPUT: map<string, int> — uuid → keyword_count
 ```
 
@@ -260,7 +260,7 @@ words = ["breaking", "weiner", "fbi", "hillary", "exposed"]
 1. On startup:
    Insert all suspicious keywords into the Trie.
 
-2. For each article in preprocessed.csv:
+2. For each article in dataCleaned.csv:
    - Read uuid and title_text_cleaned
    - Split title_text_cleaned into word list
    - keyword_count = countKeywords(word list)
@@ -283,7 +283,7 @@ words = ["breaking", "weiner", "fbi", "hillary", "exposed"]
 
 | | Details |
 |---|---|
-| **Read** | `preprocessed.csv` — columns `uuid`, `title_text_cleaned` |
+| **Read** | `dataCleaned.csv` — columns `uuid`, `title_text_cleaned` |
 | **Initialize** | Insert suspicious keyword list into Trie |
 | **Process** | For each article, count keyword matches |
 | **Output** | `map<string, int>` — uuid → keyword_count |
@@ -294,12 +294,12 @@ words = ["breaking", "weiner", "fbi", "hillary", "exposed"]
 ## Module 3 — HashMap
 
 ### Responsibility
-Read all 10 columns from `preprocessed.csv` and store each article as a `NewsRecord` struct in a custom HashMap, keyed by `uuid`. The Scoring module will call `get(uuid)` to retrieve article metadata.
+Read all 10 columns from `dataCleaned.csv` and store each article as a `NewsRecord` struct in a custom HashMap, keyed by `uuid`. The Scoring module will call `get(uuid)` to retrieve article metadata.
 
 ### Input / Output
 
 ```
-INPUT:  preprocessed.csv — all 10 columns
+INPUT:  dataCleaned.csv — all 12 columns
 OUTPUT: HashMap<uuid, NewsRecord> — O(1) average lookup
 ```
 
@@ -364,8 +364,8 @@ If load_factor > 0.75:
 ```
 1. Initialize HashMap (starting bucket count: e.g., 1000)
 
-2. For each row in preprocessed.csv:
-   - Parse all 10 columns into a NewsRecord
+2. For each row in dataCleaned.csv:
+   - Parse all 12 columns into a NewsRecord
    - Call insert(uuid, record)
    - Check load_factor → rehash if needed
 
@@ -376,7 +376,7 @@ If load_factor > 0.75:
 
 | | Details |
 |---|---|
-| **Read** | `preprocessed.csv` — all 10 columns |
+| **Read** | `dataCleaned.csv` — all 12 columns |
 | **Key** | `uuid` (string) |
 | **Value** | `NewsRecord` struct |
 | **Collision handling** | Separate chaining (linked list per bucket) |
@@ -593,7 +593,7 @@ Metrics:
 
 ### Preprocessing → Trie & HashMap
 
-Both modules read from `preprocessed.csv` independently.
+Both modules read from `dataCleaned.csv` independently.
 
 ```
 Column order:
