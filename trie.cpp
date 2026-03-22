@@ -75,7 +75,10 @@ void Trie::loadSuspiciousKeywords(const std::string& filename) {
 }
 
 void Trie::processFileAndDisplay(const std::string& filePath) {
-    std::cout << "\n--- Start checking file: " << filePath << " ---" << std::endl;
+    std::cout << " --- Start checking file: " << filePath << " ---" << std::endl;
+    std::cout << "| \n";
+    std::cout << " --- The scoring for each article based on the number of suspicious words that match the list ---" << std::endl;
+    std::cout << "| \n";
     
     std::ifstream file(filePath);
     if (!file.is_open()) {
@@ -136,7 +139,7 @@ void Trie::processFileAndDisplay(const std::string& filePath) {
     }
 
     if (rowCount == 0) {
-        std::cout << "[Announcement] The file has only header" << std::endl;
+        std::cout << "--- [Announcement] The file has only header ---" << std::endl;
     }
     
     file.close();
