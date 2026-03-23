@@ -105,25 +105,21 @@ shares             : ""  →  0
 
 ---
 
-### Step 3 — Clean and merge text columns (title + text)
+### Step 3 — Clean text columns (title and text separately)
 
-Merge `title` and `text` into one column: `title_text_cleaned`. Then apply the following 5 sub-steps in order:
+Apply the following cleaning steps to both `title` and `text` independently:
 
 ```
-[3.1] Merge title and text into one string:
-      "BREAKING: Weiner With FBI!!!" + "Fox News reported this morning..."
-      → "BREAKING: Weiner With FBI!!! Fox News reported this morning..."
+[3.1] Convert to lowercase:
+      "BREAKING: Weiner With FBI!!!" → "breaking: weiner with fbi!!!"
 
-[3.2] Convert to lowercase:
-      → "breaking: weiner with fbi!!! fox news reported this morning..."
+[3.2] Replace non-alphanumeric characters with space (keep apostrophe '):
+      → "breaking  weiner with fbi   "
 
-[3.3] Remove special characters  (! ? : , . " ( ) - ' [ ] / \):
-      → "breaking weiner with fbi fox news reported this morning"
+[3.3] Tokenize — split into individual words:
+      → ["breaking", "weiner", "with", "fbi"]
 
-[3.4] Tokenize — split into individual words:
-      → ["breaking", "weiner", "with", "fbi", "fox", "news", "reported", "this", "morning"]
-
-[3.5] Remove stopwords — words with no meaningful signal:
+[3.4] Remove stopwords — words with no meaningful signal:
       Stopword list: {"the", "a", "an", "is", "are", "was", "were", "be", "been",
                       "have", "has", "had", "do", "does", "did", "will", "would",
                       "could", "should", "this", "that", "these", "those", "with",
@@ -131,162 +127,135 @@ Merge `title` and `text` into one column: `title_text_cleaned`. Then apply the f
                       "of", "by", "as", "it", "its", "he", "she", "they", "we",
                       "you", "i", "not", "so", "if", "then", "than", "what", ...}
 
-      → ["breaking", "weiner", "fbi", "fox", "news", "reported", "morning"]
+      → ["breaking", "weiner", "fbi"]
+
+[3.5] Join back into cleaned string:
+      → "breaking weiner fbi"
 ```
+
+> **Note:** Title and text are stored as **separate columns** (not merged) in the output.
+> Numeric columns are passed through `ensureNumeric()` (trim whitespace, handle negatives, enforce single decimal point).
+> Text columns are wrapped with `escapeCSV()` (double-quoted, internal quotes escaped as `""`).
 
 ---
 
 ### Output Format (`dataCleaned.csv`)
 
 ```
-uuid, type, site_url, domain_rank, title_text_cleaned, spam_score,
+uuid, type, site_url, domain_rank, title, text, spam_score,
 replies_count, participants_count, likes, comments, shares
 ```
 
+**12 columns total — title and text are separate, cleaned columns.**
+
 **Real examples from the dataset:**
 
-```
-c70e149f, bias, 100percentfedup.com, 25689,
-breaking weiner cooperating fbi hillary email investigation fox news reported,
-0.0, 0, 1, 0, 0, 0
-
-8a35883f, fake, abcnews.com.co, 65078,
-amish america commit vote donald trump mathematically guaranteeing presidential victory,
-0.0, 0, 0, 0, 0, 0
-
-98b54c30, conspiracy, 21stcenturywire.com, 0,
-intl community financing protecting terrorists mother agnes vanessa beeley syria,
-0.015, 0, 0, 0, 0, 0
+```csv
+"c70e149f...","bias","100percentfedup.com",25689.0,"breaking weiner cooperating fbi hillary email investigation","red state fox news sunday reported morning...",0.0,0,1,0,0,0
 ```
 
 ### Summary
 
 | | Details |
 |---|---|
-| **Read** | `dataTesting.csv` |
+| **Read** | `dataTesting.csv` (20 columns) |
 | **Keep** | 12 columns relevant to scoring |
-| **Empty numeric cells** | Replace with `0` |
-| **title + text** | Merge → lowercase → remove special chars → tokenize → remove stopwords → store as `title_text_cleaned` |
-| **Write** | `dataCleaned.csv` |
-| **Output consumed by** | Trie (reads `title_text_cleaned`), HashMap (reads all columns) |
+| **Empty numeric cells** | Replace with `0` via `ensureNumeric()` |
+| **title** | Clean separately: lowercase → remove special chars → remove stopwords |
+| **text** | Clean separately: same pipeline as title |
+| **Text output** | Wrapped in `escapeCSV()` (double-quoted) |
+| **Write** | `dataCleaned.csv` (12 columns) |
+| **Output consumed by** | Trie (reads `title` + `text`), HashMap (reads all 12 columns) |
 
 ---
 
 ## Module 2 — Trie
 
 ### Responsibility
-Build a Trie loaded with suspicious keywords. For each article in `dataCleaned.csv`, scan its cleaned text and count how many suspicious keywords it contains. Provide `uuid → keyword_count` to the Scoring module.
+Build a Trie loaded with suspicious keywords (single words and multi-word phrases). For each article in `dataCleaned.csv`, scan its `title` + `text` and count how many suspicious keywords it contains using greedy longest-match. Return `uuid → keyword_count` as `std::map` to the Scoring module.
 
 ### Input / Output
 
 ```
-INPUT:  dataCleaned.csv — columns: uuid, title_text_cleaned
-OUTPUT: map<string, int> — uuid → keyword_count
+INPUT:  data/SuspiciousKeywords.csv — one keyword/phrase per line (417 entries)
+        data/dataCleaned.csv       — columns: uuid (col 0), title (col 4), text (col 5)
+OUTPUT: std::map<string, int>      — uuid → keyword_count
 ```
 
 ### Trie Structure
 
-A Trie (prefix tree) stores strings character by character. Each path from the root to an end-marked node represents one complete word.
+A Trie (prefix tree) stores strings character by character. Each path from the root to an end-marked node represents one complete word or phrase.
 
-```
-Trie containing: "breaking", "bias", "bomb"
-
-root
- └── b
-      ├── r → e → a → k → i → n → g  [END]  ✓ "breaking"
-      ├── i → a → s  [END]                   ✓ "bias"
-      └── o → m → b  [END]                   ✓ "bomb"
-```
-
-**Node definition:**
+**Node definition (supports multi-word via space at index 26):**
 ```cpp
 struct TrieNode {
-    TrieNode* children[26];   // one slot per lowercase letter
+    TrieNode* children[27];   // 0-25 = a-z, 26 = space (for multi-word phrases)
     bool isEndOfWord;
 
     TrieNode() {
         isEndOfWord = false;
-        for (int i = 0; i < 26; i++) children[i] = nullptr;
+        for (int i = 0; i < 27; i++) children[i] = nullptr;
+    }
+    ~TrieNode() {
+        for (int i = 0; i < 27; i++) {
+            if (children[i] != nullptr) delete children[i];
+        }
     }
 };
 ```
 
-### Suspicious Keywords to Load
-
+**Character mapping via `getIndex()`:**
 ```cpp
-// Emotionally charged
-{"breaking", "bombshell", "shocking", "scandal", "alert", "urgent", "exclusive"}
-
-// Conspiracy-related
-{"conspiracy", "hoax", "coverup", "rigged", "corrupt", "exposed", "deepstate"}
-
-// Unverified claim indicators
-{"allegedly", "rumored", "unconfirmed", "leaked"}
-
-// Polarizing language
-{"crooked", "evil", "destroy", "invasion", "regime", "radical"}
+int getIndex(char c) {
+    if (c == ' ') return 26;                              // space → index 26
+    char low = std::tolower(static_cast<unsigned char>(c));
+    if (low >= 'a' && low <= 'z') return low - 'a';       // a-z → 0-25
+    return -1;                                             // skip invalid chars
+}
 ```
 
-### Operations to Implement
+### Suspicious Keywords
 
-**insert(word)** — add one keyword to the Trie:
+Loaded from `data/SuspiciousKeywords.csv` — 417 entries, one per line.
+Includes single words (`breaking`, `urgent`) and multi-word phrases (`money laundering`, `work from home`).
+
+### Operations Implemented
+
+**insert(word)** — add one keyword/phrase to the Trie (skips invalid chars via `getIndex`).
+
+**search(word)** — check if a word/phrase exists in the Trie (same `getIndex` logic, `continue` on invalid chars).
+
+**processFileAndDisplay(filePath)** — main processing function:
 ```
-insert("breaking"):
-  root → [b] → [r] → [e] → [a] → [k] → [i] → [n] → [g] → isEndOfWord = true
-```
-
-**search(word)** — check if a word exists in the Trie:
-```
-search("breaking") → true
-search("weather")  → false
-```
-
-**countKeywords(words)** — count how many words in a list match the Trie:
-```
-words = ["breaking", "weiner", "fbi", "hillary", "exposed"]
-
-  "breaking" → search() = true   (+1)
-  "weiner"   → search() = false
-  "fbi"      → search() = false
-  "hillary"  → search() = false
-  "exposed"  → search() = true   (+1)
-
-→ return 2
-```
-
-### Workflow
-
-```
-1. On startup:
-   Insert all suspicious keywords into the Trie.
-
-2. For each article in dataCleaned.csv:
-   - Read uuid and title_text_cleaned
-   - Split title_text_cleaned into word list
-   - keyword_count = countKeywords(word list)
-   - Store: result_map[uuid] = keyword_count
-
-3. Pass result_map to Scoring module.
+1. Parse each CSV row into columns (split by ',')
+2. Extract uuid = cols[0], content = cols[4] + " " + cols[5]  (title + text)
+3. Tokenize content into word list
+4. Greedy multi-word matching:
+   For each word[i], try building phrases: word[i], word[i]+" "+word[i+1], ...
+   up to 10 words ahead. Keep the longest match found.
+   If matched, skip consumed words to avoid double-counting.
+5. Store result[uuid] = count
+6. Return std::map<string, int>
 ```
 
 ### Time Complexity
 
 | Operation | Complexity |
 |-----------|-----------|
-| Insert one word | O(m) |
-| Search one word | O(m) |
-| countKeywords for one article | O(n × m) |
+| Insert one keyword | O(m) |
+| Search one keyword | O(m) |
+| Process one article (greedy match) | O(n × k × m) |
 
-*m = word length, n = number of words in article*
+*m = avg keyword length, n = words in article, k = max phrase length (10)*
 
 ### Summary
 
 | | Details |
 |---|---|
-| **Read** | `dataCleaned.csv` — columns `uuid`, `title_text_cleaned` |
-| **Initialize** | Insert suspicious keyword list into Trie |
-| **Process** | For each article, count keyword matches |
-| **Output** | `map<string, int>` — uuid → keyword_count |
+| **Read** | `dataCleaned.csv` — columns `uuid` (0), `title` (4), `text` (5) |
+| **Keywords** | `SuspiciousKeywords.csv` — 417 entries, single + multi-word |
+| **Matching** | Greedy longest-match, skips consumed words |
+| **Output** | `std::map<string, int>` — uuid → keyword_count |
 | **Pass to** | Scoring module |
 
 ---
@@ -294,12 +263,12 @@ words = ["breaking", "weiner", "fbi", "hillary", "exposed"]
 ## Module 3 — HashMap
 
 ### Responsibility
-Read all 10 columns from `dataCleaned.csv` and store each article as a `NewsRecord` struct in a custom HashMap, keyed by `uuid`. The Scoring module will call `get(uuid)` to retrieve article metadata.
+Read all 12 columns from `dataCleaned.csv` and store each article as a `NewsRecord` struct in a **custom-built HashMap** (not `std::unordered_map`), keyed by `uuid`. The Scoring module will call `get(uuid)` to retrieve article metadata in O(1) average time.
 
 ### Input / Output
 
 ```
-INPUT:  dataCleaned.csv — all 12 columns
+INPUT:  data/dataCleaned.csv — 12 columns, text fields escaped with escapeCSV()
 OUTPUT: HashMap<uuid, NewsRecord> — O(1) average lookup
 ```
 
@@ -307,17 +276,18 @@ OUTPUT: HashMap<uuid, NewsRecord> — O(1) average lookup
 
 ```cpp
 struct NewsRecord {
-    string uuid;
-    string type;
-    string site_url;
-    int    domain_rank;
-    string title_text_cleaned;
-    float  spam_score;
-    int    replies_count;
-    int    participants_count;
-    int    likes;
-    int    comments;
-    int    shares;
+    std::string uuid;                // col 0
+    std::string type;                // col 1  — ground truth: bias, fake, bs, conspiracy
+    std::string site_url;            // col 2
+    double      domain_rank;         // col 3  → source_score
+    std::string title;               // col 4  — cleaned text
+    std::string text;                // col 5  — cleaned text
+    double      spam_score;          // col 6  → content_score
+    int         replies_count;       // col 7  ┐
+    int         participants_count;  // col 8  │
+    int         likes;               // col 9  ├→ engagement_score
+    int         comments;            // col 10 │
+    int         shares;              // col 11 ┘
 };
 ```
 
@@ -359,17 +329,22 @@ If load_factor > 0.75:
   re-insert all existing records into new buckets
 ```
 
+### CSV Parsing Note
+
+Since `dataCleaned.csv` uses `escapeCSV()` to wrap text fields in `"..."` (with internal `"` escaped as `""`), the HashMap's CSV parser must handle **quoted fields** — similar to `parseCSVLine()` in `preprocessing.cpp`. Simple split-by-comma will not work correctly for text columns.
+
 ### Workflow
 
 ```
 1. Initialize HashMap (starting bucket count: e.g., 1000)
 
 2. For each row in dataCleaned.csv:
-   - Parse all 12 columns into a NewsRecord
+   - Parse row using quote-aware CSV parser (handle "..." fields)
+   - Build NewsRecord from 12 columns
    - Call insert(uuid, record)
    - Check load_factor → rehash if needed
 
-3. Expose get(uuid) to the Scoring module
+3. Expose get(uuid) → NewsRecord* to the Scoring module
 ```
 
 ### Summary
@@ -377,11 +352,12 @@ If load_factor > 0.75:
 | | Details |
 |---|---|
 | **Read** | `dataCleaned.csv` — all 12 columns |
+| **CSV parsing** | Quote-aware parser (handles `escapeCSV()` output) |
 | **Key** | `uuid` (string) |
-| **Value** | `NewsRecord` struct |
+| **Value** | `NewsRecord` struct (12 fields) |
 | **Collision handling** | Separate chaining (linked list per bucket) |
 | **Rehash trigger** | load_factor > 0.75 |
-| **API to expose** | `insert(uuid, record)`, `get(uuid) → NewsRecord` |
+| **API to expose** | `insert(uuid, record)`, `get(uuid) → NewsRecord*` |
 | **Pass to** | Scoring module |
 
 ---
@@ -596,26 +572,25 @@ Metrics:
 Both modules read from `dataCleaned.csv` independently.
 
 ```
-Column order:
-uuid, type, site_url, domain_rank, title_text_cleaned, spam_score,
+Column order (12 columns):
+uuid, type, site_url, domain_rank, title, text, spam_score,
 replies_count, participants_count, likes, comments, shares
+
+Note: text fields are wrapped in "..." via escapeCSV().
 ```
 
 ### Trie → Scoring
 
 ```cpp
-// Option A: look up one article at a time
-int getKeywordCount(string uuid);
-
-// Option B: return full map for Scoring to iterate
-map<string, int> getAllKeywordCounts();
+// Returns full map: uuid → keyword_count
+std::map<std::string, int> processFileAndDisplay(const std::string& filePath);
 ```
 
 ### HashMap → Scoring
 
 ```cpp
-// Returns full metadata for a given article
-NewsRecord get(string uuid);
+// Returns pointer to article metadata (nullptr if not found)
+NewsRecord* get(const std::string& uuid);
 ```
 
 ### Scoring → Evaluation
@@ -629,4 +604,4 @@ uuid, predicted_label, final_score, actual_type
 
 ---
 
-**Last Updated:** March 18, 2026
+**Last Updated:** March 22, 2026
