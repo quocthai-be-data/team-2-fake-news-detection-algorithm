@@ -39,7 +39,8 @@ public:
 
 private:
     TrieNode* root;
-    int countKeywords(std::vector<std::string>& words);
+    // parse CSV dung cach, xu ly quoted fields
+    std::vector<std::string> parseCSVLine(const std::string& line);
 };
 
 #endif
