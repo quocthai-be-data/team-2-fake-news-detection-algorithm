@@ -167,6 +167,7 @@ For full implementation details — including data structures, formulas, step-by
 
 ## 👥 Contributors
 
+<<<<<<< HEAD
 |        Name         | Role      | GitHub |
 |Truong Minh Quoc Thai|Facilitator|--------|
 |Cap Minh Hieu        |Member     |--------|
@@ -183,4 +184,8 @@ This project is licensed under the **MIT License**. Free to use, modify, and dis
 ---
 
 **Last Updated:** March 18, 2026
+<<<<<<< HEAD
 **Status:** 🟡 In Development
+=======
+**Status:** 🟡 In Development
+>>>>>>> SmallTest

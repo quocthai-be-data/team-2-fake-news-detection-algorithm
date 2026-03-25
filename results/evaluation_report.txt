@@ -1,0 +1,15 @@
+===== Evaluation Report =====
+Total articles evaluated: 0
+
+Confusion Matrix:
+  True Positive  (TP): 0
+  True Negative  (TN): 0
+  False Positive (FP): 0
+  False Negative (FN): 0
+
+Metrics:
+  Accuracy  : 0.000
+  Precision : 0.000
+  Recall    : 0.000
+  F1 Score  : 0.000
+=============================

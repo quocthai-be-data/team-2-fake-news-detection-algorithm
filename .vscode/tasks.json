@@ -2,53 +2,22 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build Active File (C++)",
+      "label": "Build Project",
       "type": "shell",
       "command": "g++",
-      "args": ["-g", "-Wall", "-std=c++17", "${file}", "-o", "${fileDirname}/${fileBasenameNoExtension}"],
-      "options": { "cwd": "${fileDirname}" },
+      "args": ["-g", "-Wall", "-std=c++17", "src/*.cpp", "-o", "main.exe"],
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": ["$gcc"],
       "group": { "kind": "build", "isDefault": true }
     },
     {
-      "label": "Build Active File (C)",
+      "label": "Build Active File (C++)",
       "type": "shell",
-      "command": "gcc",
-      "args": ["-g", "-Wall", "-std=c17", "${file}", "-o", "${fileDirname}/${fileBasenameNoExtension}"],
+      "command": "g++",
+      "args": ["-g", "-Wall", "-std=c++17", "${file}", "-o", "${fileDirname}/${fileBasenameNoExtension}.exe"],
       "options": { "cwd": "${fileDirname}" },
       "problemMatcher": ["$gcc"],
       "group": "build"
-    },
-    {
-      "label": "Build All CPP in Folder",
-      "type": "shell",
-      "command": "g++",
-      "args": ["-g", "-Wall", "-std=c++17", "*.cpp", "-o", "${workspaceFolderBasename}"],
-      "options": { "cwd": "${workspaceFolder}" },
-      "problemMatcher": ["$gcc"],
-      "group": "build"
-    },
-    {
-      "label": "Build & Run Active File (C++)",
-      "type": "shell",
-      "command": "g++ -g -Wall -std=c++17 \"${file}\" -o \"${fileDirname}\\${fileBasenameNoExtension}.exe\" && start \"${fileBasenameNoExtension}\" cmd /c \"\\\"${fileDirname}\\${fileBasenameNoExtension}.exe\\\" & pause\"",
-      "options": {
-        "cwd": "${fileDirname}",
-        "shell": { "executable": "cmd.exe", "args": ["/d", "/c"] }
-      },
-      "problemMatcher": ["$gcc"],
-      "group": "build"
-    },
-    {
-      "label": "Clean Build Output",
-      "type": "shell",
-      "command": "del /Q \"${fileDirname}\\${fileBasenameNoExtension}.exe\" 2>nul || echo No exe found",
-      "options": {
-        "cwd": "${fileDirname}",
-        "shell": { "executable": "cmd.exe", "args": ["/d", "/c"] }
-      },
-      "problemMatcher": [],
-      "group": "none"
     }
   ]
 }
