@@ -2,6 +2,7 @@
 #include "trie.h"
 #include "hashMap.h"
 #include "scoring.h"
+#include "evaluation.h"
 
 int main(){
     // Preprocessor p;
@@ -17,6 +18,21 @@ int main(){
     for (auto i = keywordCounts.begin(); i != keywordCounts.end(); ++i){
         std::cout << i->first << " | " << i->second << std::endl;
     }
+
+    // Building special HashMap (HashNode) 
+    HashMap hmap;
+    hmap.loadFromCSV("data/dataCleaned.csv");
+    hmap.displaySummary();
+
+    Scorer scorer;
+    std::vector<ScoringResult> results = scorer.scoreArticles(hmap, keywordCounts);
+    scorer.writeResultsCSV("results/results.csv", results);
+
+    Evaluator evaluator;
+    EvaluationReport report = evaluator.evaluate(results);
+    evaluator.displayReport(report);
+    evaluator.writeReport("results/evaluation_report.txt", report);
+
     system("pause");
     return 0;
 }
