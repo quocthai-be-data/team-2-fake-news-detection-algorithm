@@ -260,7 +260,7 @@ void HashMap::displaySummary() {
     std::cout << "  Total articles : " << elementCount << std::endl;
     std::cout << "  Bucket count   : " << bucketCount << std::endl;
 
-    float loadFactor = static_cast<float>(elementCount) / bucketCount;
+    float loadFactor = static_cast<float>(elementCount + 1) / bucketCount;
     std::cout << "  Load factor    : " << std::fixed << std::setprecision(3) << loadFactor << std::endl;
 
     // Count non-empty buckets and max chain length
